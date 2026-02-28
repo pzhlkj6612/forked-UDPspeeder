@@ -17,7 +17,7 @@ if(GIT_FOUND)
         RESULT_VARIABLE GIT_RESULT
     )
 endif()
-if(NOT GIT_FOUND OR NOT GIT_RESULT EQUAL 0)
+if(NOT GIT_FOUND OR GIT_RESULT)
     set(GIT_COMMIT_HASH "unknown")
 endif()
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/git_version.h
@@ -45,7 +45,7 @@ set(SOURCE_FILES
 add_executable(speederv2 ${SOURCE_FILES})
 
 # Include directories (matching makefile's -I. and -isystem libev)
-target_include_directories(speederv2 SYSTEM PRIVATE libev)
+target_include_directories(speederv2 SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libev)
 target_include_directories(speederv2 PRIVATE . ${CMAKE_CURRENT_BINARY_DIR})
 
 # Compiler warning flags (matching makefile FLAGS)
@@ -63,7 +63,6 @@ if(MINGW)
     target_link_libraries(speederv2 PRIVATE ws2_32)
 elseif(APPLE)
     # Matching makefile's 'mac' target: no -lrt, no -static
-    set(SPEEDERV2_STATIC OFF CACHE BOOL "Static linking not supported on macOS" FORCE)
 elseif(CYGWIN)
     # Matching makefile's 'cygwin' target
     target_link_libraries(speederv2 PRIVATE rt)
@@ -73,6 +72,6 @@ else()
     target_link_libraries(speederv2 PRIVATE rt)
 endif()
 
-if(SPEEDERV2_STATIC)
+if(SPEEDERV2_STATIC AND NOT APPLE)
     target_link_options(speederv2 PRIVATE -static)
 endif()
