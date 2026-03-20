@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 5
     defaults:
       run:
-        shell: bash
+        shell: ${{ runner.os == 'Windows' && 'msys2 {0}' || 'bash' }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -43,6 +43,7 @@ jobs:
 
       - name: Linux - Install Dependencies
         if: ${{ runner.os == 'Linux' }}
+        shell: bash
         run: |
           sudo apt update && \
           sudo apt install -y build-essential cmake make
@@ -50,7 +51,13 @@ jobs:
       - name: Build with make
         if: matrix.method == 'make'
         run: |
-          make
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            make mingw
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            make mac
+          else
+            make
+          fi
 
       - name: Build with cmake
         if: matrix.method == 'cmake'

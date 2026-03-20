@@ -51,10 +51,12 @@ target_include_directories(speederv2 SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/
 target_include_directories(speederv2 PRIVATE . ${CMAKE_CURRENT_BINARY_DIR})
 
 # Compiler warning flags (matching makefile FLAGS)
-target_compile_options(speederv2 PRIVATE
-    -Wall -Wextra
-    -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers
-)
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(speederv2 PRIVATE
+        -Wall -Wextra
+        -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers
+    )
+endif()
 
 # Build configuration options
 option(SPEEDERV2_STATIC "Build with static linking (matching makefile)" ON)
