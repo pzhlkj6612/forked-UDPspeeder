@@ -21,16 +21,13 @@ jobs:
           - macos-latest
     runs-on: ${{ matrix.os }}
     timeout-minutes: 5
-    defaults:
-      run:
-        shell: ${{ runner.os == 'Windows' && 'msys2 {0}' || 'bash' }}
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
       - name: Windows - Setup MSYS2
-        if: ${{ runner.os == 'Windows' }}
+        if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
@@ -42,25 +39,34 @@ jobs:
             mingw-w64-ucrt-x86_64-cmake
 
       - name: Linux - Install Dependencies
-        if: ${{ runner.os == 'Linux' }}
-        shell: bash
+        if: runner.os == 'Linux'
         run: |
           sudo apt update && \
           sudo apt install -y build-essential cmake make
 
       - name: Build with make
-        if: matrix.method == 'make'
+        if: matrix.method == 'make' && runner.os != 'Windows'
         run: |
-          if [ "$RUNNER_OS" = "Windows" ]; then
-            make mingw
-          elif [ "$RUNNER_OS" = "macOS" ]; then
+          if [ "$RUNNER_OS" = "macOS" ]; then
             make mac
           else
             make
           fi
 
+      - name: Build with make (Windows)
+        if: matrix.method == 'make' && runner.os == 'Windows'
+        shell: msys2 {0}
+        run: make mingw
+
       - name: Build with cmake
-        if: matrix.method == 'cmake'
+        if: matrix.method == 'cmake' && runner.os != 'Windows'
         run: |
           cmake -S . -B ../build
+          cmake --build ../build
+
+      - name: Build with cmake (Windows)
+        if: matrix.method == 'cmake' && runner.os == 'Windows'
+        shell: msys2 {0}
+        run: |
+          cmake -S . -B ../build -G "MinGW Makefiles"
           cmake --build ../build
