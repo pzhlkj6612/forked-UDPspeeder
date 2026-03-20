@@ -1,0 +1,58 @@
+name: Build
+
+on:
+  push:
+    branches: ["branch_libev"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        method: [make, cmake]
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+          - windows-latest
+          - windows-11-arm
+          - macos-26-intel
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Windows - Setup MSYS2
+        if: ${{ runner.os == 'Windows' }}
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            base-devel
+            make
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+
+      - name: Linux - Install Dependencies
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          sudo apt update && \
+          sudo apt install -y build-essential cmake make
+
+      - name: Build with make
+        if: matrix.method == 'make'
+        run: |
+          make
+
+      - name: Build with cmake
+        if: matrix.method == 'cmake'
+        run: |
+          cmake -S . -B ../build
+          cmake --build ../build
