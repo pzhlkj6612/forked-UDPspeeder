@@ -13,11 +13,13 @@ jobs:
       matrix:
         method: [make, cmake]
         os:
-          - ubuntu-latest
-          - ubuntu-24.04-arm
+          # amd64
           - windows-latest
-          - windows-11-arm
+          - ubuntu-latest
           - macos-26-intel
+          # arm64
+          - windows-11-arm
+          - ubuntu-24.04-arm
           - macos-latest
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
@@ -45,8 +47,20 @@ jobs:
           sudo apt update && \
           sudo apt install -y build-essential cmake make
 
-      - name: Build with make
-        if: matrix.method == 'make' && runner.os != 'Windows'
+      - name: Build with make (Windows)
+        if: runner.os == 'Windows' && matrix.method == 'make'
+        shell: msys2 {0}
+        run: make mingw
+
+      - name: Build with cmake (Windows)
+        if: runner.os == 'Windows' && matrix.method == 'cmake' 
+        shell: msys2 {0}
+        run: |
+          cmake -S . -B ../build -G "MinGW Makefiles"
+          cmake --build ../build
+
+      - name: Build with make (non-Windows)
+        if: runner.os != 'Windows' && matrix.method == 'make'
         run: |
           if [ "$RUNNER_OS" = "macOS" ]; then
             make mac
@@ -54,20 +68,8 @@ jobs:
             make
           fi
 
-      - name: Build with make (Windows)
-        if: matrix.method == 'make' && runner.os == 'Windows'
-        shell: msys2 {0}
-        run: make mingw
-
-      - name: Build with cmake
-        if: matrix.method == 'cmake' && runner.os != 'Windows'
+      - name: Build with cmake (non-Windows)
+        if: runner.os != 'Windows' && matrix.method == 'cmake'
         run: |
           cmake -S . -B ../build
-          cmake --build ../build
-
-      - name: Build with cmake (Windows)
-        if: matrix.method == 'cmake' && runner.os == 'Windows'
-        shell: msys2 {0}
-        run: |
-          cmake -S . -B ../build -G "MinGW Makefiles"
           cmake --build ../build
