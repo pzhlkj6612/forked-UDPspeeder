@@ -14,13 +14,13 @@ jobs:
         method: [make, cmake]
         os:
           # amd64
-          - windows-latest
-          - ubuntu-latest
+          - windows-2025
+          - ubuntu-24.04
           - macos-26-intel
           # arm64
           - windows-11-arm
           - ubuntu-24.04-arm
-          - macos-latest
+          - macos-15
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
