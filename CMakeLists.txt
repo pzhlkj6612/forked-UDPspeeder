@@ -79,3 +79,5 @@ endif()
 if(SPEEDERV2_STATIC AND NOT APPLE)
     target_link_options(speederv2 PRIVATE -static)
 endif()
+
+install(TARGETS speederv2 RUNTIME DESTINATION bin)

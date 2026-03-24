@@ -50,12 +50,11 @@ jobs:
         shell: msys2 {0}
         run: |
           make mingw
-
-          # test
-          find .
+          mkdir -p /tmp/install/bin
+          cp speederv2 /tmp/install/bin/
 
       - name: Build with cmake (Windows)
-        if: runner.os == 'Windows' && matrix.method == 'cmake' 
+        if: runner.os == 'Windows' && matrix.method == 'cmake'
         shell: msys2 {0}
         run: |
           cmake -S . -B /tmp/build -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=/tmp/install
@@ -70,9 +69,8 @@ jobs:
           else
             make
           fi
-
-          # test
-          find .
+          mkdir -p /tmp/install/bin
+          cp speederv2 /tmp/install/bin/
 
       - name: Build with cmake (non-Windows)
         if: runner.os != 'Windows' && matrix.method == 'cmake'
@@ -84,5 +82,5 @@ jobs:
       - name: Upload built program
         uses: actions/upload-artifact@v7
         with:
-          name: build-${{ matrix.os }}
+          name: build-${{ matrix.method }}-${{ matrix.os }}
           path: /tmp/install
