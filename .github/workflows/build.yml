@@ -25,8 +25,6 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
 
       - name: Windows - Setup MSYS2
         if: runner.os == 'Windows'
@@ -50,14 +48,19 @@ jobs:
       - name: Build with make (Windows)
         if: runner.os == 'Windows' && matrix.method == 'make'
         shell: msys2 {0}
-        run: make mingw
+        run: |
+          make mingw
+
+          # test
+          find .
 
       - name: Build with cmake (Windows)
         if: runner.os == 'Windows' && matrix.method == 'cmake' 
         shell: msys2 {0}
         run: |
-          cmake -S . -B ../build -G "MinGW Makefiles"
-          cmake --build ../build
+          cmake -S . -B /tmp/build -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=/tmp/install
+          cmake --build /tmp/build
+          cmake --install /tmp/build
 
       - name: Build with make (non-Windows)
         if: runner.os != 'Windows' && matrix.method == 'make'
@@ -68,15 +71,18 @@ jobs:
             make
           fi
 
+          # test
+          find .
+
       - name: Build with cmake (non-Windows)
         if: runner.os != 'Windows' && matrix.method == 'cmake'
         run: |
-          cmake -S . -B ../build -DCMAKE_INSTALL_PREFIX=../install
-          cmake --build ../build
-          cmake --install ../build
+          cmake -S . -B /tmp/build -DCMAKE_INSTALL_PREFIX=/tmp/install
+          cmake --build /tmp/build
+          cmake --install /tmp/build
 
       - name: Upload built program
         uses: actions/upload-artifact@v7
         with:
           name: build-${{ matrix.os }}
-          path: ../install
+          path: /tmp/install
