@@ -84,3 +84,4 @@ jobs:
         with:
           name: build-${{ matrix.method }}-${{ matrix.os }}
           path: /tmp/install
+          if-no-files-found: error
