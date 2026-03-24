@@ -12,6 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         method: [make, cmake]
+        # do not use "-latest" runners; we need stable filenames
         os:
           # amd64
           - windows-2025
