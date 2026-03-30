@@ -12,8 +12,8 @@ jobs:
       fail-fast: false
       matrix:
         method: [make, cmake]
-        # do not use "-latest" runners; we need stable filenames
         os:
+          # do NOT use "-latest" runners; we need stable filenames
           # amd64
           - windows-2025
           - ubuntu-24.04
@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Windows - Setup MSYS2
+      - name: Windows - Install Dependencies
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
         with:
@@ -46,7 +46,7 @@ jobs:
           sudo apt update && \
           sudo apt install -y build-essential cmake make
 
-      - name: Build with make (Windows)
+      - name: Windows - Build with make
         if: runner.os == 'Windows' && matrix.method == 'make'
         shell: msys2 {0}
         run: |
@@ -54,7 +54,7 @@ jobs:
           mkdir -p install/bin
           cp speederv2 install/bin/
 
-      - name: Build with cmake (Windows)
+      - name: Windows - Build with cmake
         if: runner.os == 'Windows' && matrix.method == 'cmake'
         shell: msys2 {0}
         run: |
@@ -62,7 +62,7 @@ jobs:
           cmake --build build
           cmake --install build
 
-      - name: Build with make (non-Windows)
+      - name: non-Windows - Build with make
         if: runner.os != 'Windows' && matrix.method == 'make'
         run: |
           if [ "$RUNNER_OS" = "macOS" ]; then
@@ -73,14 +73,14 @@ jobs:
           mkdir -p install/bin
           cp speederv2 install/bin/
 
-      - name: Build with cmake (non-Windows)
+      - name: non-Windows - Build with cmake
         if: runner.os != 'Windows' && matrix.method == 'cmake'
         run: |
           cmake -S . -B build -DCMAKE_INSTALL_PREFIX="$PWD/install"
           cmake --build build
           cmake --install build
 
-      - name: Upload built program
+      - name: Upload
         uses: actions/upload-artifact@v7
         with:
           name: build-${{ matrix.method }}-${{ matrix.os }}
