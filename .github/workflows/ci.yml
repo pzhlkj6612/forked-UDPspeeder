@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: ["branch_libev"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    timeout-minutes: 10
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        method: [make, cmake]
+        os:
+          # do NOT use "-latest" runners; we need stable filenames
+          # amd64
+          - windows-2025
+          - ubuntu-24.04
+          - macos-26-intel
+          # arm64
+          - windows-11-arm
+          - ubuntu-24.04-arm
+          - macos-15
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Windows - Install Dependencies
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            base-devel
+            make
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-make
+
+      - name: Linux - Install Dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update && \
+          sudo apt install -y build-essential cmake make
+
+      - name: Windows - Build with make
+        if: runner.os == 'Windows' && matrix.method == 'make'
+        shell: msys2 {0}
+        run: |
+          make mingw
+          mkdir -p install/bin
+          cp speederv2 install/bin/
+
+      - name: Windows - Build with cmake
+        if: runner.os == 'Windows' && matrix.method == 'cmake'
+        shell: msys2 {0}
+        run: |
+          cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX="$PWD/install"
+          cmake --build build
+          cmake --install build
+
+      - name: non-Windows - Build with make
+        if: runner.os != 'Windows' && matrix.method == 'make'
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            make mac
+          else
+            make
+          fi
+          mkdir -p install/bin
+          cp speederv2 install/bin/
+
+      - name: non-Windows - Build with cmake
+        if: runner.os != 'Windows' && matrix.method == 'cmake'
+        run: |
+          cmake -S . -B build -DCMAKE_INSTALL_PREFIX="$PWD/install"
+          cmake --build build
+          cmake --install build
+
+      - name: Upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-${{ matrix.method }}-${{ matrix.os }}
+          path: install
+          if-no-files-found: error
